@@ -180,6 +180,36 @@ body {
   /* overflow: scroll; */
 }
 
+
+
+
+/* SCROLLBAR LOOK AND BEHAVIOUR */
+/* width */
+.list::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* track */
+.list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* thumb */
+.list::-webkit-scrollbar-thumb {
+  background-color: #717a8a;
+  /* dark gray */
+  border-radius: 999px;
+}
+
+/* hover (optional but nice) */
+.list::-webkit-scrollbar-thumb:hover {
+  background-color: #4b5563;
+}
+
+
+
+
 .list-watched {
   height: calc(100% - 9rem);
 

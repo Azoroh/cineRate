@@ -57,7 +57,7 @@ import "./App.css";
 // ];
 
 const average = (arr) =>
-  arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
+  arr?.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
 
 const API_key = "769177b1";
 
@@ -74,6 +74,16 @@ export default function App() {
   }
 
   function handleCloseMovie() {
+    setSelectedId(null);
+  }
+
+  function handleAddWatched(movie) {
+    setWatched((watched) => {
+      const exists = watched?.some((el) => el.imdbID === movie.imdbID);
+      if (exists) return;
+      return [...watched, movie];
+    });
+
     setSelectedId(null);
   }
 
@@ -147,6 +157,7 @@ export default function App() {
             <MovieDetails
               selectedId={selectedId}
               onCloseMovie={handleCloseMovie}
+              onAddWatched={handleAddWatched}
             />
           ) : (
             <>
@@ -251,16 +262,17 @@ function ListItem({ movie, watchlist, onSelectMovie }) {
   );
 }
 
-function MovieDetails({ selectedId, onCloseMovie }) {
+function MovieDetails({ selectedId, onCloseMovie, onAddWatched }) {
   const [movie, setMovie] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [userRating, setUserRating] = useState(0);
 
   const {
-    Title: title,
-    Year: year,
-    Poster: poster,
-    Runtime: runtime,
+    Title,
+    Year,
+    Poster,
+    Runtime,
     imdbRating,
     Plot: plot,
     Released: released,
@@ -268,6 +280,20 @@ function MovieDetails({ selectedId, onCloseMovie }) {
     Director: director,
     Genre: genre,
   } = movie;
+
+  function handleAdd() {
+    const newWatchedMovie = {
+      imdbID: selectedId,
+      Title,
+      Year,
+      Poster,
+      imdbRating: Number(imdbRating),
+      userRating,
+      runtime: Number(Runtime.split(" ").at(0)),
+    };
+
+    onAddWatched(newWatchedMovie);
+  }
 
   useEffect(() => {
     async function getMovieDetails() {
@@ -298,12 +324,12 @@ function MovieDetails({ selectedId, onCloseMovie }) {
       ) : (
         <>
           <header>
-            <img src={poster} alt={`Poster of ${movie}`} />
+            <img src={Poster} alt={`Poster of ${movie.Title}`} />
 
             <div className="details-overview">
-              <h2>{title}</h2>
+              <h2>{Title}</h2>
               <p>
-                {released} &bull; {runtime}
+                {released} &bull; {Runtime}
               </p>
               <p>{genre}</p>
               <p>
@@ -315,7 +341,17 @@ function MovieDetails({ selectedId, onCloseMovie }) {
 
           <section>
             <div className="rating">
-              <StarRating maxRating={10} size={24} />
+              <StarRating
+                maxRating={10}
+                size={24}
+                onSetRating={setUserRating}
+              />
+
+              {userRating > 0 && (
+                <button className="btn-add" onClick={handleAdd}>
+                  + Add to list
+                </button>
+              )}
             </div>
             <p>
               <em>{plot}</em>
@@ -334,9 +370,9 @@ function MovieDetails({ selectedId, onCloseMovie }) {
 }
 
 function Summary({ watched }) {
-  const avgImdbRating = average(watched.map((movie) => movie.imdbRating));
-  const avgUserRating = average(watched.map((movie) => movie.userRating));
-  const avgRuntime = average(watched.map((movie) => movie.runtime));
+  const avgImdbRating = average(watched?.map((movie) => movie.imdbRating));
+  const avgUserRating = average(watched?.map((movie) => movie.userRating));
+  const avgRuntime = average(watched?.map((movie) => movie.runtime));
 
   return (
     <div className="summary">
@@ -344,7 +380,7 @@ function Summary({ watched }) {
       <div>
         <p>
           <span>#️⃣</span>
-          <span>{watched.length} movies</span>
+          <span>{watched?.length} movies</span>
         </p>
         <p>
           <span>⭐️</span>
