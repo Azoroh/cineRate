@@ -90,7 +90,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    let ignore = false;
+    const controller = new AbortController();
 
     async function fetchMovies() {
       try {
@@ -99,6 +99,7 @@ export default function App() {
 
         const res = await fetch(
           `https://www.omdbapi.com/?apikey=${API_key}&s=${encodeURIComponent(query)}`,
+          { signal: controller.signal },
         );
 
         if (!res.ok) throw new Error("Fetching movies failed, Try again!!");
@@ -107,25 +108,24 @@ export default function App() {
 
         if (data.Response === "False") throw new Error("Movie not found!");
 
-        if (!ignore) setMovies(data.Search);
+        setMovies(data.Search);
+        setError("");
       } catch (error) {
-        if (!ignore) {
-          console.error(error.message);
-          setError(error.message);
-        }
+        console.error(error.message);
+
+        if (error.name !== "AbortError") setError(error.message);
       } finally {
-        if (!ignore) setIsLoading(false);
+        setIsLoading(false);
       }
     }
     if (!query || query.length < 3) {
       setMovies([]);
       return;
     }
-
     fetchMovies();
 
-    return () => {
-      ignore = true;
+    return function () {
+      controller.abort();
     };
   }, [query]);
 
@@ -318,6 +318,18 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
     onAddWatched(newWatchedMovie);
     onCloseMovie();
   }
+
+  useEffect(() => {
+    function callback(e) {
+      if (e.code === "Escape") onCloseMovie();
+    }
+
+    document.addEventListener("keydown", callback);
+
+    return () => {
+      document.removeEventListener("keydown", callback);
+    };
+  }, [onCloseMovie]);
 
   useEffect(() => {
     async function getMovieDetails() {
